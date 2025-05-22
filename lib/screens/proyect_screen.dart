@@ -1,11 +1,16 @@
+import 'dart:convert';
+
 import 'package:asistencia/app_theme.dart';
 import 'package:asistencia/models/attendance.dart';
+import 'package:asistencia/models/professor.dart';
 import 'package:asistencia/models/subproyect.dart';
+import 'package:asistencia/models/subproyecto.dart';
 import 'package:asistencia/screens/attendance_detail_screen.dart';
 import 'package:asistencia/screens/create_attendance_screen.dart';
 import 'package:asistencia/utils/globals.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:http/http.dart' as http;
 
 class ProyectScreen extends StatefulWidget {
   final SubProyect subproyecto;
@@ -16,6 +21,44 @@ class ProyectScreen extends StatefulWidget {
 }
 
 class _ProyectScreenState extends State<ProyectScreen> {
+  bool isLoading = false;
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    listarAsistencias();
+  }
+  Future<void> listarAsistencias() async {
+    isLoading = true;
+    setState(() {});
+    const url =
+        'https://api-springboot-hdye.onrender.com/asistenciassubproyecto';
+    String body = widget.subproyecto.id; // reemplaza con el string que deseas enviar
+
+    final response = await http.post(Uri.parse(url), body: body);
+    setState(() {
+      isLoading = false;
+    });
+    if (response.statusCode == 200) {
+      List list = jsonDecode(response.body);
+          list.map((json) => Attendance.fromJson(json));
+      print(list);
+      if (list.isNotEmpty) {
+        setState(() {
+          listAttendance = list
+              .map((json) => Attendance.fromJson(json))
+              .toList()
+              .cast<Attendance>();
+        }); 
+      } else {
+        print('No hay subproyectos disponibles');
+      }
+
+          
+    } else {
+      print('Error: ${response.statusCode}');
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,11 +69,26 @@ class _ProyectScreenState extends State<ProyectScreen> {
             style: AppTheme.headline,
           ),
           centerTitle: true,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Actualizar',
+              onPressed: () {
+                listarAsistencias();
+              },
+            ),
+          ],
         ),
-        body: Padding(
+        body: 
+        isLoading
+            ? const Center(
+                child: CircularProgressIndicator(),
+              ):
+        
+        Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(children: [
-            if (widget.subproyecto.listAttendance.isEmpty)
+            if (listAttendance .isEmpty)
               const Padding(
                 padding: EdgeInsets.all(32),
                 child: Text(
@@ -41,7 +99,7 @@ class _ProyectScreenState extends State<ProyectScreen> {
               ),
             Flexible(
               child: ListView.builder(
-                itemCount: widget.subproyecto.listAttendance.length,
+                itemCount: listAttendance .length,
                 itemBuilder: (BuildContext context, int index) {
                   return Container(
                       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -117,9 +175,8 @@ class _ProyectScreenState extends State<ProyectScreen> {
                                           print("Eliminar");
                                           print(index);
 
-                                          widget.subproyecto.listAttendance
-                                              .remove(widget.subproyecto
-                                                  .listAttendance[index]);
+                                          listAttendance 
+                                              .remove(listAttendance [index]);
                                           setState(() {});
                                           Navigator.of(context).pop(true);
                                         },
@@ -133,7 +190,7 @@ class _ProyectScreenState extends State<ProyectScreen> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => StudentDetailScreen(
-                                  student: widget.subproyecto.listAttendance[index],
+                                  student: listAttendance [index],
                                 ),
                               ),
                             ); */
@@ -162,10 +219,10 @@ class _ProyectScreenState extends State<ProyectScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                widget.subproyecto.listAttendance[index].fecha,
+                                listAttendance [index].fecha,
                                 style: AppTheme.caption,
                               ),
-                              const Text("Nombre del profesor",
+                               Text(professor.nombre,
                                   style: AppTheme.subtitle1),
                             ],
                           ),
@@ -185,15 +242,14 @@ class _ProyectScreenState extends State<ProyectScreen> {
                                 ),
                                 onPressed: () {
                                   print(
-                                      widget.subproyecto.listAttendance[index]);
+                                      listAttendance [index]);
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) =>
                                           AttendanceDetailScreen(
                                               "Ver",
-                                              widget.subproyecto
-                                                  .listAttendance[index]),
+                                              listAttendance [index]),
                                     ),
                                   );
                                 },
@@ -237,14 +293,16 @@ class _ProyectScreenState extends State<ProyectScreen> {
 
   Future<void> agregarAttendance(attendance) async {
     setState(() {
-      widget.subproyecto.listAttendance.add(attendance);
+
+
+      listAttendance .add(attendance);
       mensaje('¡Asistencia creada exitosamente!', "y");
     });
   }
 
   /*  Future<void> editarAttendance(index, attendance) async {
     setState(() {
-      widget.subproyecto.listAttendance[index] = attendance;
+      listAttendance [index] = attendance;
       mensaje('¡Asistencia editada exitosamente!', "y");
     });
   } */
@@ -258,4 +316,6 @@ class _ProyectScreenState extends State<ProyectScreen> {
       ),
     );
   }
+
+ 
 }

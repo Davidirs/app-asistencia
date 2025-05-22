@@ -65,8 +65,8 @@ class _CreateSubProyectScreenState extends State<CreateSubProyectScreen> {
             if (_formKey.currentState!.validate()) {
               SubProyect subproyect = SubProyect(
                 nombre: controller.text,
-                docente: "Nombre del docente",
-                listAttendance: [],
+                profesor: "Nombre del docente",
+                id: "ID del docente",
               );
               Navigator.pop(context, subproyect);
             }

@@ -16,6 +16,29 @@ class Student {
     required this.fechaNacimiento,
     required this.estado,
   });
+  static Student fromJson(Map<String, dynamic> json) {
+    return Student(
+      carrera: json['carrera'],
+      periodoAcademico: json['periodoAcademico'] ?? '',
+      imagen: json['imagen'],
+      nombre: json['nombre'],
+      cedula: json['cedula'],
+      fechaNacimiento: json['fechaNacimiento'] ?? '',
+      estado: json['estado'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'carrera': carrera,
+      'periodoAcademico': periodoAcademico,
+      'imagen': imagen,
+      'nombre': nombre,
+      'cedula': cedula,
+      'fechaNacimiento': fechaNacimiento,
+      'estado': estado,
+    };
+  }
 }
 
 class StudentVerificado extends Student {

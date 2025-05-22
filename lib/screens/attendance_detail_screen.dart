@@ -1,9 +1,12 @@
+import 'dart:convert';
+
 import 'package:asistencia/app_theme.dart';
 import 'package:asistencia/models/attendance.dart';
 import 'package:asistencia/models/student.dart';
 import 'package:asistencia/screens/scraping_unellez.dart';
 import 'package:asistencia/screens/student_detail_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 class AttendanceDetailScreen extends StatefulWidget {
   final title;
@@ -15,6 +18,50 @@ class AttendanceDetailScreen extends StatefulWidget {
 }
 
 class _AttendanceDetailScreenState extends State<AttendanceDetailScreen> {
+  bool isLoading = false;
+  List<Student> listEstudiantes = [];
+  @override
+  initState() {
+    super.initState();
+    cargarDatos();
+  }
+
+  cargarDatos() async {
+    isLoading = true;
+    setState(() {});
+    const url =
+        'https://api-springboot-hdye.onrender.com/buscarestudiantes';
+    String body = jsonEncode(widget.attendance.estudiantes); // reemplaza con el string que deseas enviar
+    
+    
+  final headers = {
+    'Content-Type': 'application/json',
+  };
+
+  final response = await http.post(Uri.parse(url), headers: headers, body: body);
+    print("Respuesta: ${response.body}");
+    setState(() {
+      isLoading = false;
+    });
+    if (response.statusCode == 200) {
+      List list = jsonDecode(response.body);
+      list.map((json) => Student.fromJson(json));
+      print(list);
+      if (list.isNotEmpty) {
+        setState(() {
+          listEstudiantes = list
+              .map((json) => Student.fromJson(json))
+              .toList()
+              .cast<Student>();
+        });
+      } else {
+        print('No hay subproyectos disponibles');
+      }
+    } else {
+      print('Error: ${response.statusCode}');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -25,6 +72,15 @@ class _AttendanceDetailScreenState extends State<AttendanceDetailScreen> {
           style: AppTheme.headline,
         ),
         centerTitle: true,
+        actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Actualizar',
+              onPressed: () {
+                cargarDatos();
+              },
+            ),
+          ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -57,7 +113,7 @@ class _AttendanceDetailScreenState extends State<AttendanceDetailScreen> {
               "Listado de estudiantes",
               style: AppTheme.title,
             ),
-            if (widget.attendance.listStudent.isEmpty)
+            if (widget.attendance.estudiantes.isEmpty)
               const Padding(
                 padding: EdgeInsets.all(32),
                 child: Text(
@@ -65,10 +121,16 @@ class _AttendanceDetailScreenState extends State<AttendanceDetailScreen> {
                   "Aún no se han agregado estudiantes a esta lista de asistencia",
                   style: TextStyle(),
                 ),
+              ),if (isLoading)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: CircularProgressIndicator(),
+                ),
               ),
             Flexible(
               child: ListView.builder(
-                itemCount: widget.attendance.listStudent.length,
+                itemCount: widget.attendance.estudiantes.length,
                 itemBuilder: (BuildContext context, int index) {
                   return Container(
                       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -139,9 +201,9 @@ class _AttendanceDetailScreenState extends State<AttendanceDetailScreen> {
                                           print("Eliminar");
                                           print(index);
 
-                                          widget.attendance.listStudent.remove(
+                                          widget.attendance.estudiantes.remove(
                                               widget.attendance
-                                                  .listStudent[index]);
+                                                  .estudiantes[index]);
                                           setState(() {});
                                           Navigator.of(context).pop(true);
                                         },
@@ -156,11 +218,12 @@ class _AttendanceDetailScreenState extends State<AttendanceDetailScreen> {
                               },
                             );
                           } else {
-                            Navigator.push(
+                            if (listEstudiantes.isNotEmpty)
+                             Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => StudentDetailScreen(
-                                  student: widget.attendance.listStudent[index],
+                                  student: listEstudiantes[index],
                                 ),
                               ),
                             );
@@ -185,25 +248,25 @@ class _AttendanceDetailScreenState extends State<AttendanceDetailScreen> {
                             ],
                           ),
                           title: Text(
-                            widget.attendance.listStudent[index].cedula,
+                            widget.attendance.estudiantes[index],
                             style: AppTheme.subtitle2,
                           ),
-                          subtitle: Text(
-                            widget.attendance.listStudent[index].nombre,
+                          subtitle: Text(listEstudiantes.isEmpty?
+                            'Nombre del estudiante':
+                            listEstudiantes[index].nombre,
                             style: AppTheme.caption,
-                          ),
+                          ), 
                           //isThreeLine: true,
-                          trailing: widget
-                                      .attendance.listStudent[index].estado ==
+                          trailing:listEstudiantes.isNotEmpty? listEstudiantes[index].estado ==
                                   "SIN VERIFICAR"
                               ? IconButton(
                                   onPressed: () async {
                                     print("Verificar");
 
-                                    widget.attendance.listStudent[index] =
+                                    listEstudiantes[index] =
                                         await verificarEstudiante(widget
                                             .attendance
-                                            .listStudent[index]
+                                            .estudiantes[index]
                                             .cedula);
                                     setState(() {});
                                   },
@@ -219,7 +282,7 @@ class _AttendanceDetailScreenState extends State<AttendanceDetailScreen> {
                                       ),
                                     ],
                                   ))
-                              : widget.attendance.listStudent[index].estado ==
+                              : listEstudiantes[index].estado ==
                                       "NO REGISTRADO"
                                   ? const Icon(
                                       Icons.error,
@@ -228,12 +291,17 @@ class _AttendanceDetailScreenState extends State<AttendanceDetailScreen> {
                                   : const Icon(
                                       Icons.verified,
                                       color: Colors.green,
+                                    ): const Icon(
+                                      Icons.error,
+                                      color: Colors.red,
                                     ),
+                        
                         ),
                       ));
                 },
               ),
             ),
+            
           ],
         ),
       ),

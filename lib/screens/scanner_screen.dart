@@ -4,7 +4,8 @@ import 'dart:developer';
 import 'dart:io';
 import 'package:asistencia/app_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:qr_code_scanner/qr_code_scanner.dart'; /* 
+import 'package:qr_code_scanner_plus/qr_code_scanner_plus.dart';
+/* 
 import 'package:registro_qr/db/db.dart';
 import 'package:registro_qr/db/qr.dart';
 import 'package:registro_qr/db/user.dart';
@@ -20,6 +21,7 @@ class ScannerScreen extends StatefulWidget {
 class _ScannerScreenState extends State<ScannerScreen> {
   Barcode? result;
   String cedula = "";
+  String mensaje = 'Escanea un código';
   QRViewController? controller;
   bool isReady = false;
   bool isPause = false;
@@ -128,8 +130,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
                         style: const TextStyle(color: AppTheme.primary),
                         maxLines: 5,
                       )
-                    : const Text(
-                        'Escanea un código',
+                    : Text(
+                        mensaje,
                         style: TextStyle(color: Colors.white),
                       ),
               ),
@@ -222,6 +224,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
       this.controller = controller;
     });
     controller.scannedDataStream.listen((scanData) {
+      print(scanData.code);
       // Utilizamos una expresión regular para buscar los números después de "cedula="
       RegExp regex = RegExp(r'cedula=(\d+)');
       Match? match = regex.firstMatch(scanData.code.toString());
@@ -235,7 +238,22 @@ class _ScannerScreenState extends State<ScannerScreen> {
           result = scanData;
         });
       } else {
-        print("No se encontraron números después de cedula=");
+      
+        // Utilizamos una expresión regular para buscar los números después de "cedula="
+        RegExp regex = RegExp(r'cod=(\d+)');
+        Match? match = regex.firstMatch(scanData.code.toString());
+        if (match != null) {
+          String numerosDespues = match.group(1)!;
+          print("Qr de profesor=: $numerosDespues");
+          setState(() {
+            mensaje = "Este QR es de profesor";
+          });
+        } else {
+          print("No se encontraron números después de cedula=");
+          setState(() {
+            mensaje = "No es QR de estudiante";
+          });
+        }
       }
     });
   }

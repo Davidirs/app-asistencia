@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:asistencia/app_theme.dart';
 import 'package:asistencia/models/attendance.dart';
 import 'package:asistencia/models/student.dart';
@@ -9,6 +11,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
+import 'package:http/http.dart' as http;
 
 class CreateAttendanceScreen extends StatefulWidget {
   final title;
@@ -355,17 +358,32 @@ class _CreateAttendanceScreenState extends State<CreateAttendanceScreen> {
                 String fecha = DateTime.now().toLocal().toString();
                 Attendance attendance = Attendance(
                   fecha: fecha,
-                  hora: "12:00 pm",
-                  listStudent: [...listEstudiantes],
+                  //hora: "12:00 pm",
+                  id: "IDfirestore",
+                  estudiantes: obtenerEstudiantes(listEstudiantes),
                   descripcion: commentary,
+                  profesor: professor.id,
+                  subproyecto: subproyecto.nombre,
                 );
-                Navigator.pop(context, attendance);
+
+                crearAsistencia(attendance);
+                //Navigator.pop(context, attendance);
               },
               tooltip: 'Listo',
               child: const Icon(Icons.done),
             )
           : Container(),
     );
+  }
+
+  obtenerEstudiantes(listEstudiantes) {
+    List listCiEstudiantes = [];
+
+    listEstudiantes.forEach((est) {
+      listCiEstudiantes.add(est.cedula);
+    });
+    // Obtiene la lista de estudiantes
+    return listCiEstudiantes;
   }
 
   mensaje(String msg, color) {
@@ -410,5 +428,37 @@ class _CreateAttendanceScreenState extends State<CreateAttendanceScreen> {
       mensaje('¡Error al agregar estudiante $cedula!', "n");
     }
     return respuesta;
+  }
+
+  Future<void> crearAsistencia(Attendance asistencia) async {
+    const url = 'https://api-springboot-hdye.onrender.com/agregarasistencia';
+    String body = jsonEncode(
+        asistencia.toJson()); // reemplaza con el string que deseas enviar
+    print(body);
+    
+  final headers = {
+    'Content-Type': 'application/json',
+  };
+
+  final response = await http.post(Uri.parse(url), headers: headers, body: body);
+
+    if (response.statusCode == 200) {
+      /* List list = jsonDecode(response.body);
+      list.map((json) => Attendance.fromJson(json));
+      print(list);
+      if (list.isNotEmpty) {
+        setState(() {
+          listAttendance = list
+              .map((json) => Attendance.fromJson(json))
+              .toList()
+              .cast<Attendance>();
+        }); 
+      } else {
+        print('No hay subproyectos disponibles');
+      }*/
+        print('Asistencia creada: ${response.body}');
+    } else {
+      print('Error: ${response.statusCode}');
+    }
   }
 }
