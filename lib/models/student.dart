@@ -1,6 +1,6 @@
 class Student {
   final String carrera;
-  final String periodoAcademico;
+  final String periodo;
   final String imagen;
   final String nombre;
   final String cedula;
@@ -9,7 +9,7 @@ class Student {
 
   Student({
     required this.carrera,
-    required this.periodoAcademico,
+    required this.periodo,
     required this.imagen,
     required this.nombre,
     required this.cedula,
@@ -19,7 +19,7 @@ class Student {
   static Student fromJson(Map<String, dynamic> json) {
     return Student(
       carrera: json['carrera'],
-      periodoAcademico: json['periodoAcademico'] ?? '',
+      periodo: json['periodo'] ?? '',
       imagen: json['imagen'],
       nombre: json['nombre'],
       cedula: json['cedula'],
@@ -31,7 +31,7 @@ class Student {
   Map<String, dynamic> toJson() {
     return {
       'carrera': carrera,
-      'periodoAcademico': periodoAcademico,
+      'periodo': periodo,
       'imagen': imagen,
       'nombre': nombre,
       'cedula': cedula,
@@ -44,7 +44,7 @@ class Student {
 class StudentVerificado extends Student {
   StudentVerificado({
     required super.carrera,
-    required super.periodoAcademico,
+    required super.periodo,
     required super.imagen,
     required super.nombre,
     required super.cedula,
@@ -56,7 +56,7 @@ class StudentVerificado extends Student {
     // Aquí puedes hacer alguna lógica para obtener el resto de los datos del estudiante
     return StudentVerificado(
       carrera: 'Carrera Verificada',
-      periodoAcademico: '2024',
+      periodo: '2024',
       imagen: 'imagen_verificada.jpg',
       nombre: 'Estudiante Verificado',
       cedula: cedula,
@@ -69,7 +69,7 @@ class StudentVerificado extends Student {
 class StudentNoVerificado extends Student {
   StudentNoVerificado({
     required super.carrera,
-    required super.periodoAcademico,
+    required super.periodo,
     required super.imagen,
     required super.nombre,
     required super.cedula,
@@ -81,7 +81,7 @@ class StudentNoVerificado extends Student {
     // Aquí puedes hacer alguna lógica para obtener el resto de los datos del estudiante
     return StudentNoVerificado(
         carrera: "SIN VERIFICAR",
-        periodoAcademico: "SIN VERIFICAR",
+        periodo: "SIN VERIFICAR",
         imagen: "SIN VERIFICAR",
         nombre: "ESTUDIANTE UNELLEZ",
         cedula: cedula,
@@ -93,7 +93,7 @@ class StudentNoVerificado extends Student {
 class StudentNoRegistrado extends Student {
   StudentNoRegistrado({
     required super.carrera,
-    required super.periodoAcademico,
+    required super.periodo,
     required super.imagen,
     required super.nombre,
     required super.cedula,
@@ -105,7 +105,7 @@ class StudentNoRegistrado extends Student {
     // Aquí puedes hacer alguna lógica para obtener el resto de los datos del estudiante
     return StudentNoRegistrado(
         carrera: "NO REGISTRADO",
-        periodoAcademico: "NO REGISTRADO",
+        periodo: "NO REGISTRADO",
         imagen: "NO REGISTRADO",
         nombre: "NO REGISTRADO",
         cedula: cedula,

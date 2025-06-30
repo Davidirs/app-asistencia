@@ -3,9 +3,12 @@ import 'dart:convert';
 import 'package:asistencia/app_theme.dart';
 import 'package:asistencia/models/attendance.dart';
 import 'package:asistencia/models/student.dart';
+import 'package:asistencia/screens/full_image_view.dart';
 import 'package:asistencia/screens/scanner_screen.dart';
 import 'package:asistencia/screens/scraping_unellez.dart';
 import 'package:asistencia/screens/student_detail_screen.dart';
+import 'package:asistencia/screens/upload_image.dart';
+import 'package:asistencia/services/store_service.dart';
 import 'package:asistencia/utils/globals.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -27,7 +30,7 @@ class _CreateAttendanceScreenState extends State<CreateAttendanceScreen> {
   final FocusNode _focusNode = FocusNode();
   final _formKey = GlobalKey<FormState>(); // Clave para el formulario
   String commentary = "";
-
+  String imageUrl = "";
   @override
   void dispose() {
     controller.dispose();
@@ -42,10 +45,52 @@ class _CreateAttendanceScreenState extends State<CreateAttendanceScreen> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title + " asistencia", style: AppTheme.headline),
         centerTitle: true,
+        actions: [
+          imageUrl.isNotEmpty
+              ? GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => FullImageView(imageUrl: imageUrl),
+                      ),
+                    );
+                  },
+                  child: Image.network(
+                    imageUrl,
+                    width: 40,
+                    height: 40,
+                    fit: BoxFit.cover,
+                  ),
+                )
+              : Icon(Icons.image, size: 40),
+          IconButton(
+            icon: const Icon(Icons.camera_alt),
+            onPressed: () async {
+              final url = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CameraScreen(),
+                ),
+              );
+
+// imageUrl ahora contiene la URL de la imagen subida
+              if (url != null) {
+                setState(() {
+                  imageUrl = url;
+                });
+                print('📸 URL de la imagen: $imageUrl');
+              }
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
-          const Text(style: AppTheme.title, "Agregar estudiante"),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: const Text(style: AppTheme.title, "Agregar estudiante"),
+          ),
           Container(
             padding: const EdgeInsets.all(8.0),
             decoration: const BoxDecoration(
@@ -74,7 +119,16 @@ class _CreateAttendanceScreenState extends State<CreateAttendanceScreen> {
                           focusNode: _focusNode,
                           onFieldSubmitted: (value) {
                             if (_formKey.currentState!.validate()) {
-                              agregarEstudiante(controller, controller.text);
+                              bool existe = listEstudiantes.any((estudiante) =>
+                                  estudiante.cedula == controller.text);
+
+                              if (existe) {
+                                print("Hay estudiantes no registrados");
+                                mensaje('¡Estudiante ya agregado!', "n");
+                              } else {
+                                agregarEstudiante(controller, controller.text);
+                                controller.clear();
+                              }
                             }
                             _focusNode.unfocus();
                           },
@@ -182,7 +236,10 @@ class _CreateAttendanceScreenState extends State<CreateAttendanceScreen> {
               ),
             ),
           ),
-          const Text(style: AppTheme.title, "Listado de estudiantes"),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: const Text(style: AppTheme.title, "Listado de estudiantes"),
+          ),
           if (listEstudiantes.isEmpty)
             const Padding(
               padding: EdgeInsets.all(32),
@@ -354,7 +411,17 @@ class _CreateAttendanceScreenState extends State<CreateAttendanceScreen> {
       ),
       floatingActionButton: listEstudiantes.isNotEmpty
           ? FloatingActionButton(
-              onPressed: () {
+              onPressed: () async {
+                bool hayNoRegistrados = listEstudiantes
+                    .any((estudiante) => estudiante.estado == "NO REGISTRADO");
+
+                if (hayNoRegistrados) {
+                  mensaje(
+                      '¡No puede crear asistencia con estudiantes no registrados!',
+                      "n");
+                  return;
+                }
+
                 String fecha = DateTime.now().toLocal().toString();
                 Attendance attendance = Attendance(
                   fecha: fecha,
@@ -363,11 +430,33 @@ class _CreateAttendanceScreenState extends State<CreateAttendanceScreen> {
                   estudiantes: obtenerEstudiantes(listEstudiantes),
                   descripcion: commentary,
                   profesor: professor.id,
-                  subproyecto: subproyecto.nombre,
+                  subproyecto: subproyecto.id,
+                  imageUrl: imageUrl,
                 );
+                return await showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: const Text("Confirmación"),
+                      content: const Text(
+                          "¿Has cargado todos los estudiantes?, verifique antes de aceptar."),
+                      actions: <Widget>[
+                        ElevatedButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: const Text("Cancelar"),
+                        ),
+                        ElevatedButton(
+                            onPressed: () {
+                              crearAsistencia(attendance);
 
-                crearAsistencia(attendance);
-                //Navigator.pop(context, attendance);
+                              Navigator.of(context).pop(true);
+                              Navigator.pop(context, attendance);
+                            },
+                            child: const Text("Aceptar")),
+                      ],
+                    );
+                  },
+                );
               },
               tooltip: 'Listo',
               child: const Icon(Icons.done),
@@ -423,6 +512,7 @@ class _CreateAttendanceScreenState extends State<CreateAttendanceScreen> {
       } else {
         respuesta = estudianteVerificado;
         mensaje('¡Estudiante $cedula Verificado exitosamente!', "y");
+        StoreService.crearEstudiante(estudianteVerificado);
       }
     } catch (e) {
       mensaje('¡Error al agregar estudiante $cedula!', "n");
@@ -435,12 +525,13 @@ class _CreateAttendanceScreenState extends State<CreateAttendanceScreen> {
     String body = jsonEncode(
         asistencia.toJson()); // reemplaza con el string que deseas enviar
     print(body);
-    
-  final headers = {
-    'Content-Type': 'application/json',
-  };
 
-  final response = await http.post(Uri.parse(url), headers: headers, body: body);
+    final headers = {
+      'Content-Type': 'application/json',
+    };
+
+    final response =
+        await http.post(Uri.parse(url), headers: headers, body: body);
 
     if (response.statusCode == 200) {
       /* List list = jsonDecode(response.body);
@@ -456,7 +547,7 @@ class _CreateAttendanceScreenState extends State<CreateAttendanceScreen> {
       } else {
         print('No hay subproyectos disponibles');
       }*/
-        print('Asistencia creada: ${response.body}');
+      print('Asistencia creada: ${response.body}');
     } else {
       print('Error: ${response.statusCode}');
     }

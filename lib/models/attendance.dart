@@ -1,6 +1,3 @@
-import 'dart:convert';
-
-import 'package:asistencia/models/student.dart';
 
 class Attendance {
   final String fecha;
@@ -10,6 +7,7 @@ class Attendance {
   final List estudiantes;
   final String descripcion;
   final String subproyecto;
+  final String imageUrl;
 
   Attendance({
     required this.fecha,
@@ -18,6 +16,7 @@ class Attendance {
     required this.estudiantes,
     required this.descripcion,
     required this.subproyecto,
+    required this.imageUrl,
   });
 
   static Attendance fromJson(Map<String, dynamic> json) {
@@ -31,6 +30,7 @@ class Attendance {
           .toList(), */
       descripcion: json['descripcion'] ?? "",
       subproyecto: json['subproyecto'] ?? "",
+      imageUrl: json['imageUrl'] ?? "",
     );
   }
 
@@ -42,6 +42,7 @@ class Attendance {
       'estudiantes': estudiantes.toList(),
       'descripcion': descripcion,
       'subproyecto': subproyecto,
+      'imageUrl': imageUrl,
     };
   }
 }

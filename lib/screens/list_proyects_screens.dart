@@ -3,9 +3,14 @@ import 'dart:convert';
 import 'package:asistencia/app_theme.dart';
 import 'package:asistencia/models/professor.dart';
 import 'package:asistencia/models/subproyect.dart';
-import 'package:asistencia/screens/create_subproyect_screen.dart';
+import 'package:asistencia/screens/justificativo_screen.dart';
+import 'package:asistencia/screens/login_screen.dart';
+import 'package:asistencia/screens/profile_screen.dart';
 import 'package:asistencia/screens/proyect_screen.dart';
+import 'package:asistencia/screens/waiting.dart';
+import 'package:asistencia/services/auth_service.dart';
 import 'package:asistencia/utils/globals.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -21,18 +26,40 @@ class _ListProyectsScreenState extends State<ListProyectsScreen> {
   @override
   initState() {
     super.initState();
-    print("initState");
     listarSubproyectos();
   }
 
+  Future<void> verificarAprobacion() async {
+    AuthService().usuarioActual().then((value) {
+      setState(() {
+        professor = value;
+      });
+      if (professor.aprobado != "aprobado") {
+        // Si el usuario no tiene CI, redirigir a la pantalla de login
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const WaitingScreen(),
+          ),
+        );
+      }
+    });
+  }
+
   Future<void> listarSubproyectos() async {
+    verificarAprobacion();
+    listSubproyectos = [];
     isLoading = true;
     setState(() {});
     const url =
         'https://api-springboot-hdye.onrender.com/listasubproyectosprofesor';
-    String body = professor.id; // reemplaza con el string que deseas enviar
-
-    final response = await http.post(Uri.parse(url), body: body);
+    print(professor.ci);
+    String body = jsonEncode({'id': professor.id}); // reemplaza con el string que deseas enviar
+    
+  final headers = {
+    'Content-Type': 'application/json',
+  };
+    final response = await http.post(Uri.parse(url), headers: headers, body: body);
     setState(() {
       isLoading = false;
     });
@@ -84,24 +111,80 @@ class _ListProyectsScreenState extends State<ListProyectsScreen> {
             Column(
               children: [
                 UserAccountsDrawerHeader(
-                  currentAccountPicture: CircleAvatar(
-                    child: Image.network(
-                      professor.imagen,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
+                  currentAccountPicture: 
+                  CircleAvatar(
+                radius: 50,
+                backgroundImage: (professor.imagen == null || professor.imagen!.isEmpty)
+                    ? null
+                    : Image.network(professor.imagen!).image,
+                child: professor.imagen == null || professor.imagen!.isEmpty
+                    ? Icon(Icons.person, size: 50, color: AppTheme.primary)
+                    :null
+              ),
                   accountName: Text(professor.nombre, style: AppTheme.title),
                   accountEmail:
                       Text(professor.correo, style: AppTheme.subtitle2),
                   decoration: const BoxDecoration(color: AppTheme.white),
                 ),
-                /* ListTile(
-                    title: const Text('Item 1'),
-                    onTap: () {
-                      // Update the state of the app.
-                      // ...
-                    },
-                  ),
+                 Container(
+                  color: AppTheme.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                   child: ListTile(
+                      title: const Text('Perfil'), 
+                      onTap: () async {
+                        // Update the state of the app.
+                        // ...
+                       final datosActualizados  = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>  EditarPerfilScreen(
+                              profesor: professor,
+                            ),
+                          ),
+                        );
+                        print("Datos actualizados: ${datosActualizados}");
+                        if (datosActualizados != null) {
+                          setState(() {
+                            professor = Professor.fromJson(datosActualizados);
+                            print("Nuevo profesor: ${professor}");
+                          });
+                        }
+                      },
+                      leading: const Icon(Icons.person, color: AppTheme.primary),
+                      trailing: const Icon(
+                        Icons.arrow_right,
+                        color: AppTheme.primary,
+                      ),
+                    ),
+                    
+                 ),
+                 SizedBox(height: 8),
+                 Container(
+                  color: AppTheme.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                   child: ListTile(
+                      title: const Text('Justificativos'), 
+                      onTap: () {
+                        // Update the state of the app.
+                        // ...
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>   JustificativoScreen(
+                               professor,
+                            ),
+                          ),
+                        );
+                      },
+                      leading: const Icon(Icons.file_copy, color: AppTheme.primary),
+                      trailing: const Icon(
+                        Icons.arrow_right,
+                        color: AppTheme.primary,
+                      ),
+                    ),
+                    
+                 ),
+                  /*
                   ListTile(
                     title: const Text('Item 2'),
                     onTap: () {
@@ -115,7 +198,16 @@ class _ListProyectsScreenState extends State<ListProyectsScreen> {
               children: [
                 const Divider(),
                 TextButton.icon(
-                    onPressed: () {},
+                    onPressed: () async {
+                      await FirebaseAuth.instance.signOut();
+
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => LoginScreen(),
+                        ),
+                      );
+                    },
                     icon: const Icon(Icons.logout),
                     label: const Text("cerrar sesión",
                         style: AppTheme.textbutton)),
@@ -139,7 +231,7 @@ class _ListProyectsScreenState extends State<ListProyectsScreen> {
                     padding: EdgeInsets.all(32),
                     child: Text(
                       textAlign: TextAlign.center,
-                      "Aún no se han agregado estudiantes a esta lista de asistencia",
+                      "Aún no se han asignado subproyectos a este profesor, por favor comuniquese con el administrador.",
                       style: TextStyle(),
                     ),
                   ),

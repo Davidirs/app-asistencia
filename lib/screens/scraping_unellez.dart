@@ -32,7 +32,7 @@ Future<Student> dataFromUnellez(cedula) async {
   }
   return Student(
       carrera: "SIN VERIFICAR",
-      periodoAcademico: "SIN VERIFICAR",
+      periodo: "SIN VERIFICAR",
       imagen: "SIN VERIFICAR",
       nombre: "ESTUDIANTE UNELLEZ",
       cedula: cedula,
@@ -71,7 +71,7 @@ Student filtrarDataUnellez(String html) {
       '';
 
   // Extraer el texto "2024: I-RG"
-  var periodoAcademico =
+  var periodo =
       document.querySelector('.panel-heading b:last-child')?.text.trim() ?? '';
 
   // Iterar sobre los elementos y extraer los valores
@@ -88,7 +88,7 @@ Student filtrarDataUnellez(String html) {
 
   // Imprimir los valores
   print("carrera: $carrera");
-  print("periodoAcademico: $periodoAcademico");
+  print("periodo: $periodo");
   print("imagenSrc: $imagenSrc");
   print("Nombres: $nombres");
   print("Cedula: $cedula");
@@ -96,7 +96,7 @@ Student filtrarDataUnellez(String html) {
   print("estadoInscripcion: $estadoInscripcion");
   return Student(
       carrera: carrera,
-      periodoAcademico: periodoAcademico,
+      periodo: periodo,
       imagen: imagenSrc,
       nombre: nombres,
       cedula: cedula,

@@ -41,7 +41,7 @@ class StudentDetailScreen extends StatelessWidget {
                         style: AppTheme.title,
                       ),
                       Text(
-                        student.periodoAcademico,
+                        student.periodo,
                         style: AppTheme.body2,
                       ),
                     ],

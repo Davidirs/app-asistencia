@@ -2,24 +2,28 @@ import 'dart:convert';
 
 import 'package:asistencia/app_theme.dart';
 import 'package:asistencia/models/attendance.dart';
+import 'package:asistencia/models/professor.dart';
 import 'package:asistencia/models/subproyect.dart';
 import 'package:asistencia/screens/attendance_detail_screen.dart';
 import 'package:asistencia/screens/create_attendance_screen.dart';
+import 'package:asistencia/screens/upload_image.dart';
 import 'package:asistencia/utils/globals.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 
-class ProyectScreen extends StatefulWidget {
-  final SubProyect subproyecto;
-  const ProyectScreen(this.subproyecto, {super.key});
+class JustificativoScreen extends StatefulWidget {
+  final Professor justificativo;
+  const JustificativoScreen(this.justificativo, {super.key});
 
   @override
-  State<ProyectScreen> createState() => _ProyectScreenState();
+  State<JustificativoScreen> createState() => _JustificativoScreenState();
 }
 
-class _ProyectScreenState extends State<ProyectScreen> {
+class _JustificativoScreenState extends State<JustificativoScreen> {
   bool isLoading = false;
+  
+  String imageUrl = "";
   @override
   void initState() {
     // TODO: implement initState
@@ -31,9 +35,9 @@ class _ProyectScreenState extends State<ProyectScreen> {
     listAttendance = [];
     setState(() {});
     const url =
-        'https://api-springboot-hdye.onrender.com/asistenciassubproyecto';
-    String body = jsonEncode({'id': widget.subproyecto.id}); // reemplaza con el string que deseas enviar
-    print("Cargando asistencias del subproyecto: ${widget.subproyecto.id}");
+        'https://api-springboot-hdye.onrender.com/asistenciasjustificativo';
+    String body = jsonEncode({'id': widget.justificativo.id}); // reemplaza con el string que deseas enviar
+    print("Cargando asistencias del justificativo: ${widget.justificativo.id}");
   final headers = {
     'Content-Type': 'application/json',
   };
@@ -54,7 +58,7 @@ class _ProyectScreenState extends State<ProyectScreen> {
               .cast<Attendance>();
         }); 
       } else {
-        print('No hay subproyectos disponibles');
+        print('No hay justificativos disponibles');
       }
 
           
@@ -68,7 +72,7 @@ class _ProyectScreenState extends State<ProyectScreen> {
         appBar: AppBar(
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
           title: Text(
-            widget.subproyecto.nombre,
+            widget.justificativo.nombre,
             style: AppTheme.headline,
           ),
           centerTitle: true,
@@ -280,15 +284,20 @@ class _ProyectScreenState extends State<ProyectScreen> {
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: () async {
-            subproyecto = widget.subproyecto;
-            Attendance attendance = await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const CreateAttendanceScreen("Crear"),
-              ),
-            );
-            listEstudiantes = [];
-            agregarAttendance(attendance);
+           final url = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CameraScreen(),
+                ),
+              );
+
+// imageUrl ahora contiene la URL de la imagen subida
+              if (url != null) {
+                setState(() {
+                  imageUrl = url;
+                });
+                print('📸 URL de la imagen: $imageUrl');
+              }
           },
           tooltip: 'Agregar Asistencia',
           child: const Icon(Icons.add),
