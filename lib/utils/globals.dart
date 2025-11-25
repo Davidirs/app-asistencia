@@ -1,9 +1,11 @@
 import 'package:asistencia/models/attendance.dart';
+import 'package:asistencia/models/justificativo.dart';
 import 'package:asistencia/models/professor.dart';
 import 'package:asistencia/models/student.dart';
 import 'package:asistencia/models/subproyect.dart';
 
 List<Student> listEstudiantes = [];
+List<Justificativo> listJustificativos = [];
 List<Attendance> listAttendance = [];
 List<SubProyect> listSubproyectos = [];
 Professor professor = Professor(

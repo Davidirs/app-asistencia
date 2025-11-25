@@ -1,20 +1,17 @@
 import 'dart:convert';
-
 import 'package:asistencia/app_theme.dart';
-import 'package:asistencia/models/attendance.dart';
+import 'package:asistencia/models/justificativo.dart';
 import 'package:asistencia/models/professor.dart';
-import 'package:asistencia/models/subproyect.dart';
-import 'package:asistencia/screens/attendance_detail_screen.dart';
-import 'package:asistencia/screens/create_attendance_screen.dart';
-import 'package:asistencia/screens/upload_image.dart';
+import 'package:asistencia/screens/create_justificativo.dart';
+import 'package:asistencia/screens/full_image_view.dart';
 import 'package:asistencia/utils/globals.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 
 class JustificativoScreen extends StatefulWidget {
-  final Professor justificativo;
-  const JustificativoScreen(this.justificativo, {super.key});
+  final Professor profesor;
+  const JustificativoScreen(this.profesor, {super.key});
 
   @override
   State<JustificativoScreen> createState() => _JustificativoScreenState();
@@ -28,34 +25,35 @@ class _JustificativoScreenState extends State<JustificativoScreen> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    listarAsistencias();
+    listarJustificativos();
   }
-  Future<void> listarAsistencias() async {
+  Future<void> listarJustificativos() async {
     isLoading = true;
-    listAttendance = [];
+    listJustificativos = [];
     setState(() {});
     const url =
-        'https://api-springboot-hdye.onrender.com/asistenciasjustificativo';
-    String body = jsonEncode({'id': widget.justificativo.id}); // reemplaza con el string que deseas enviar
-    print("Cargando asistencias del justificativo: ${widget.justificativo.id}");
+        'https://api-springboot-hdye.onrender.com/listajustificativosprofesor';
+    String body = jsonEncode(widget.profesor.toJson()); // reemplaza con el string que deseas enviar
+    print("Cargando Justificativos del profesor: ${widget.profesor.toJson()}");
   final headers = {
     'Content-Type': 'application/json',
   };
     final response = await http.post(Uri.parse(url), headers: headers, body: body);
-    
+    print("Respuesta del servidor: ${response.statusCode}");
+    print("Cuerpo de la respuesta: ${response.body}");
     setState(() {
       isLoading = false;
     });
     if (response.statusCode == 200) {
       List list = jsonDecode(response.body);
-          list.map((json) => Attendance.fromJson(json));
+          list.map((json) => Justificativo.fromJson(json));
       print(list);
       if (list.isNotEmpty) {
         setState(() {
-          listAttendance = list
-              .map((json) => Attendance.fromJson(json))
+          listJustificativos = list
+              .map((json) => Justificativo.fromJson(json))
               .toList()
-              .cast<Attendance>();
+              .cast<Justificativo>();
         }); 
       } else {
         print('No hay justificativos disponibles');
@@ -72,7 +70,7 @@ class _JustificativoScreenState extends State<JustificativoScreen> {
         appBar: AppBar(
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
           title: Text(
-            widget.justificativo.nombre,
+            widget.profesor.nombre,
             style: AppTheme.headline,
           ),
           centerTitle: true,
@@ -81,7 +79,7 @@ class _JustificativoScreenState extends State<JustificativoScreen> {
               icon: const Icon(Icons.refresh),
               tooltip: 'Actualizar',
               onPressed: () {
-                listarAsistencias();
+                listarJustificativos();
               },
             ),
           ],
@@ -95,18 +93,18 @@ class _JustificativoScreenState extends State<JustificativoScreen> {
         Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(children: [
-            if (listAttendance .isEmpty)
+            if (listJustificativos .isEmpty)
               const Padding(
                 padding: EdgeInsets.all(32),
                 child: Text(
                   textAlign: TextAlign.center,
-                  "Aún no se han creado listas de asistencia",
+                  "Aún no se han creado Justificativos",
                   style: TextStyle(),
                 ),
               ),
             Flexible(
               child: ListView.builder(
-                itemCount: listAttendance .length,
+                itemCount: listJustificativos .length,
                 itemBuilder: (BuildContext context, int index) {
                   return Container(
                       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -182,8 +180,8 @@ class _JustificativoScreenState extends State<JustificativoScreen> {
                                           print("Eliminar");
                                           print(index);
 
-                                          listAttendance 
-                                              .remove(listAttendance [index]);
+                                          listJustificativos 
+                                              .remove(listJustificativos [index]);
                                           setState(() {});
                                           Navigator.of(context).pop(true);
                                         },
@@ -197,7 +195,7 @@ class _JustificativoScreenState extends State<JustificativoScreen> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => StudentDetailScreen(
-                                  student: listAttendance [index],
+                                  student: listJustificativos [index],
                                 ),
                               ),
                             ); */
@@ -214,19 +212,19 @@ class _JustificativoScreenState extends State<JustificativoScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              const Icon(Icons.contact_page),
+                              const Icon(Icons.list_alt),
                               Text("#${index + 1}", style: AppTheme.textbutton),
                             ],
                           ),
-                          title: const Text(
-                            "Lista de asistencia",
+                          title:  Text(
+                            listJustificativos [index].descripcion,
                             style: AppTheme.subtitle2,
                           ),
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                listAttendance [index].fecha,
+                                listJustificativos [index].fecha,
                                 style: AppTheme.caption,
                               ),
                                Text(professor.nombre,
@@ -237,28 +235,19 @@ class _JustificativoScreenState extends State<JustificativoScreen> {
                           trailing: Column(
                             children: [
                               IconButton(
-                                icon: const Column(
-                                  children: [
-                                    Icon(Icons.visibility,
-                                        color: AppTheme.primary),
-                                    Text(
-                                      style: AppTheme.textbutton,
-                                      "Ver",
-                                    )
-                                  ],
+                                icon: Image.network(
+                                  listJustificativos [index].imageUrl,
+                                  width: 40,
+                                  height: 40,
+                                  fit: BoxFit.cover,
                                 ),
                                 onPressed: () {
-                                  print(
-                                      listAttendance [index]);
                                   Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          AttendanceDetailScreen(
-                                              "Ver",
-                                              listAttendance [index]),
-                                    ),
-                                  );
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => FullImageView(imageUrl: listJustificativos [index].imageUrl),
+                      ),
+                    );
                                 },
                               ),
                               /* IconButton(
@@ -268,7 +257,7 @@ class _JustificativoScreenState extends State<JustificativoScreen> {
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) =>
-                                          const CreateAttendanceScreen("Editar"),
+                                          const CreateJustificativosScreen("Editar"),
                                     ),
                                   );
                                 },
@@ -284,38 +273,41 @@ class _JustificativoScreenState extends State<JustificativoScreen> {
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: () async {
-           final url = await Navigator.push(
+           final justificativo = await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => CameraScreen(),
+                  builder: (context) => CrearJustificativoScreen(
+                    profesor: widget.profesor,
+                  ),
                 ),
               );
 
 // imageUrl ahora contiene la URL de la imagen subida
-              if (url != null) {
+              if (justificativo != null) {
+                print('📸 Justificativo creado: ${justificativo}');
+                print('📸 Justificativo creado: ${Justificativo.fromJson(justificativo)}');
                 setState(() {
-                  imageUrl = url;
+                   agregarJustificativos(Justificativo.fromJson(justificativo));
                 });
                 print('📸 URL de la imagen: $imageUrl');
               }
           },
-          tooltip: 'Agregar Asistencia',
+          tooltip: 'Agregar Justificativo',
           child: const Icon(Icons.add),
         ));
   }
 
-  Future<void> agregarAttendance(attendance) async {
+  Future<void> agregarJustificativos(justificativo) async {
+    print("Agregando justificativo: ${justificativo}");
     setState(() {
-
-
-      listAttendance .add(attendance);
-      mensaje('¡Asistencia creada exitosamente!', "y");
+      listJustificativos .add(justificativo);
+      mensaje('¡Justificativo creado exitosamente!', "y");
     });
   }
 
-  /*  Future<void> editarAttendance(index, attendance) async {
+  /*  Future<void> editarJustificativos(index, attendance) async {
     setState(() {
-      listAttendance [index] = attendance;
+      listJustificativos [index] = attendance;
       mensaje('¡Asistencia editada exitosamente!', "y");
     });
   } */

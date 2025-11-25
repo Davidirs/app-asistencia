@@ -132,7 +132,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                       )
                     : Text(
                         mensaje,
-                        style: TextStyle(color: Colors.white),
+                        style: const TextStyle(color: Colors.white),
                       ),
               ),
               Row(

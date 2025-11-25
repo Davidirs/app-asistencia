@@ -17,7 +17,7 @@ import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 
 class CreateAttendanceScreen extends StatefulWidget {
-  final title;
+  final String title;
   const CreateAttendanceScreen(this.title, {super.key});
 
   @override
@@ -70,7 +70,7 @@ class _CreateAttendanceScreenState extends State<CreateAttendanceScreen> {
               final url = await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => CameraScreen(),
+                  builder: (context) => const CameraScreen( 'asistencias'),
                 ),
               );
 

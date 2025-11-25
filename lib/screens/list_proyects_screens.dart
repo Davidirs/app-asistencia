@@ -114,10 +114,10 @@ class _ListProyectsScreenState extends State<ListProyectsScreen> {
                   currentAccountPicture: 
                   CircleAvatar(
                 radius: 50,
-                backgroundImage: (professor.imagen == null || professor.imagen!.isEmpty)
+                backgroundImage: ( professor.imagen.isEmpty)
                     ? null
-                    : Image.network(professor.imagen!).image,
-                child: professor.imagen == null || professor.imagen!.isEmpty
+                    : Image.network(professor.imagen).image,
+                child:  professor.imagen.isEmpty
                     ? Icon(Icons.person, size: 50, color: AppTheme.primary)
                     :null
               ),

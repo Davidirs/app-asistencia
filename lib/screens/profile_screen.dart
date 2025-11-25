@@ -1,12 +1,7 @@
-import 'dart:io';
-
 import 'package:asistencia/models/professor.dart';
 import 'package:asistencia/screens/GaleriaUploadScreen.dart';
-import 'package:asistencia/utils/globals.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:image_picker/image_picker.dart';
 
 class EditarPerfilScreen extends StatefulWidget {
   final Professor profesor;
@@ -24,8 +19,6 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
   late TextEditingController _telefonoController;
   late TextEditingController _nombreController;
   String? _imagen;
-  final ImagePicker _picker = ImagePicker();
-  XFile? _imageFile;
 
   @override
   void initState() {

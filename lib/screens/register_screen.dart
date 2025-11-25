@@ -36,12 +36,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
         // Navegar a pantalla principal después de Register exitoso
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Cuenta creada exitosamente')),
+          const SnackBar(content: Text('Cuenta creada exitosamente')),
         );
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => LoginScreen(),
+            builder: (context) => const LoginScreen(),
           ),
         );
       } catch (e) {
