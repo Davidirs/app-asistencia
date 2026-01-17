@@ -90,7 +90,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
               isPause = false;
               setState(() {});
             },
-            icon: const Icon(color: AppTheme.primary, Icons.play_arrow),
+            icon: Icon(color: AppTheme.primary, Icons.play_arrow),
           );
   }
 
@@ -127,7 +127,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                     ? Text(
                         'Cédula del estudiante:\n$cedula',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: AppTheme.primary),
+                        style: TextStyle(color: AppTheme.primary),
                         maxLines: 5,
                       )
                     : Text(
@@ -183,7 +183,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
             ],
           ),
           isPause
-              ? const Icon(Icons.pause, size: 100, color: AppTheme.primary)
+              ? Icon(Icons.pause, size: 100, color: AppTheme.primary)
               : Container(),
         ],
       ),
@@ -238,7 +238,6 @@ class _ScannerScreenState extends State<ScannerScreen> {
           result = scanData;
         });
       } else {
-      
         // Utilizamos una expresión regular para buscar los números después de "cedula="
         RegExp regex = RegExp(r'cod=(\d+)');
         Match? match = regex.firstMatch(scanData.code.toString());

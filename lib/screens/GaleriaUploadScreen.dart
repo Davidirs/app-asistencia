@@ -5,7 +5,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class GaleriaUploadScreen extends StatefulWidget {
-  final String currentImage; // puedes pasar un nombre personalizado como "${userId}.jpg"
+  final String
+      currentImage; // puedes pasar un nombre personalizado como "${userId}.jpg"
 
   const GaleriaUploadScreen({super.key, required this.currentImage});
 
@@ -19,7 +20,12 @@ class _GaleriaUploadScreenState extends State<GaleriaUploadScreen> {
   final ImagePicker _picker = ImagePicker();
 
   Future<void> _pickFromGallery() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    final pickedFile = await _picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 600,
+      maxHeight: 600,
+      imageQuality: 50,
+    );
     if (pickedFile != null) {
       setState(() {
         _imageFile = pickedFile;
@@ -35,7 +41,8 @@ class _GaleriaUploadScreenState extends State<GaleriaUploadScreen> {
     });
 
     final file = File(_imageFile!.path);
-    final fileName = 'perfil/${professor.id}/${DateTime.now().millisecondsSinceEpoch}.jpg'; // Ruta en Supabase
+    final fileName =
+        'perfil/${professor.id}/${DateTime.now().millisecondsSinceEpoch}.jpg'; // Ruta en Supabase
 
     try {
       // Subir imagen
@@ -88,17 +95,17 @@ class _GaleriaUploadScreenState extends State<GaleriaUploadScreen> {
                     width: double.infinity,
                     fit: BoxFit.cover,
                   )
-                : widget.currentImage.isNotEmpty?
-                  Image.network(
-                    widget.currentImage,
-                    height: 200,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  )
-                  :const Placeholder(
-                    fallbackHeight: 200,
-                    fallbackWidth: double.infinity,
-                  ),
+                : widget.currentImage.isNotEmpty
+                    ? Image.network(
+                        widget.currentImage,
+                        height: 200,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      )
+                    : const Placeholder(
+                        fallbackHeight: 200,
+                        fallbackWidth: double.infinity,
+                      ),
             const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: _isUploading ? null : _pickFromGallery,
@@ -107,9 +114,8 @@ class _GaleriaUploadScreenState extends State<GaleriaUploadScreen> {
             ),
             const SizedBox(height: 10),
             ElevatedButton.icon(
-              onPressed: _isUploading || _imageFile == null
-                  ? null
-                  : _uploadToSupabase,
+              onPressed:
+                  _isUploading || _imageFile == null ? null : _uploadToSupabase,
               icon: _isUploading
                   ? const CircularProgressIndicator()
                   : const Icon(Icons.cloud_upload),

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:asistencia/services/config_service.dart';
 
 class AppTheme {
   AppTheme._();
 
-  static const Color primary = Color(0xFFE87C1E);
+  static Color get primary => ConfigService().primaryColor.value;
+  static Color get secondary => ConfigService().secondaryColor.value;
   static const Color notWhite = Color(0xFFEDF0F2);
   static const Color background = Color(0xFFF2F3F8);
   static const Color nearlyWhite = Color(0xFFFEFEFE);
@@ -76,7 +78,7 @@ class AppTheme {
     letterSpacing: -0.04,
     color: darkText,
   );
-  static const TextStyle textbutton = TextStyle(
+  static TextStyle textbutton = TextStyle(
     // subtitle2 -> subtitle
     fontFamily: fontName,
     fontStyle: FontStyle.italic,

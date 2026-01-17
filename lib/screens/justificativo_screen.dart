@@ -1,12 +1,12 @@
 import 'dart:convert';
-import 'package:asistencia/app_theme.dart';
+
 import 'package:asistencia/models/justificativo.dart';
 import 'package:asistencia/models/professor.dart';
 import 'package:asistencia/screens/create_justificativo.dart';
 import 'package:asistencia/screens/full_image_view.dart';
+import 'package:asistencia/services/config_service.dart';
 import 'package:asistencia/utils/globals.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 
 class JustificativoScreen extends StatefulWidget {
@@ -19,308 +19,341 @@ class JustificativoScreen extends StatefulWidget {
 
 class _JustificativoScreenState extends State<JustificativoScreen> {
   bool isLoading = false;
-  
   String imageUrl = "";
+
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     listarJustificativos();
   }
+
   Future<void> listarJustificativos() async {
     isLoading = true;
     listJustificativos = [];
-    setState(() {});
-    const url =
-        'https://api-springboot-hdye.onrender.com/listajustificativosprofesor';
-    String body = jsonEncode(widget.profesor.toJson()); // reemplaza con el string que deseas enviar
+    if (mounted) setState(() {});
+
+    final url = '${ConfigService().apiUrl}/listajustificativosprofesor';
+    String body = jsonEncode(widget.profesor.toJson());
     print("Cargando Justificativos del profesor: ${widget.profesor.toJson()}");
-  final headers = {
-    'Content-Type': 'application/json',
-  };
-    final response = await http.post(Uri.parse(url), headers: headers, body: body);
-    print("Respuesta del servidor: ${response.statusCode}");
-    print("Cuerpo de la respuesta: ${response.body}");
-    setState(() {
-      isLoading = false;
-    });
-    if (response.statusCode == 200) {
-      List list = jsonDecode(response.body);
-          list.map((json) => Justificativo.fromJson(json));
-      print(list);
-      if (list.isNotEmpty) {
+
+    final headers = {'Content-Type': 'application/json'};
+
+    try {
+      final response =
+          await http.post(Uri.parse(url), headers: headers, body: body);
+      print("Respuesta del servidor: ${response.statusCode}");
+
+      if (mounted) {
         setState(() {
-          listJustificativos = list
-              .map((json) => Justificativo.fromJson(json))
-              .toList()
-              .cast<Justificativo>();
-        }); 
-      } else {
-        print('No hay justificativos disponibles');
+          isLoading = false;
+        });
       }
 
-          
-    } else {
-      print('Error: ${response.statusCode}');
+      if (response.statusCode == 200) {
+        List list = jsonDecode(response.body);
+        print(list);
+        if (list.isNotEmpty) {
+          if (mounted) {
+            setState(() {
+              listJustificativos = list
+                  .map((json) => Justificativo.fromJson(json))
+                  .toList()
+                  .cast<Justificativo>();
+            });
+          }
+        } else {
+          print('No hay justificativos disponibles');
+        }
+      } else {
+        print('Error: ${response.statusCode}');
+      }
+    } catch (e) {
+      print("Error al conectar: $e");
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-          title: Text(
-            widget.profesor.nombre,
-            style: AppTheme.headline,
+      backgroundColor: Colors.grey[100],
+      body: Stack(
+        children: [
+          _buildHeader(context),
+          Padding(
+            padding: const EdgeInsets.only(top: 100),
+            child: Column(
+              children: [
+                Expanded(
+                  child: isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _buildJustificativoList(),
+                ),
+              ],
+            ),
           ),
-          centerTitle: true,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              tooltip: 'Actualizar',
-              onPressed: () {
-                listarJustificativos();
-              },
-            ),
-          ],
-        ),
-        body: 
-        isLoading
-            ? const Center(
-                child: CircularProgressIndicator(),
-              ):
-        
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(children: [
-            if (listJustificativos .isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(32),
-                child: Text(
-                  textAlign: TextAlign.center,
-                  "Aún no se han creado Justificativos",
-                  style: TextStyle(),
-                ),
-              ),
-            Flexible(
-              child: ListView.builder(
-                itemCount: listJustificativos .length,
-                itemBuilder: (BuildContext context, int index) {
-                  return Container(
-                      margin: const EdgeInsets.symmetric(vertical: 4),
-                      decoration: const BoxDecoration(
-                        boxShadow: [
-                          BoxShadow(
-                            //color: Colors.red,
-                            offset: Offset.zero,
-                            blurRadius: 0.1,
-                            spreadRadius: 0.1,
-                          ),
-                        ],
-                        color: Colors.white,
-                      ),
-                      child: Dismissible(
-                        background: Container(
-                          decoration: const BoxDecoration(
-                            //borderRadius: BorderRadius.circular(10),
-                            color: Colors.green,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              const Icon(Icons.edit, color: Colors.white),
-                              const Text(
-                                "Editar",
-                                style: TextStyle(color: Colors.white),
-                              ),
-                              SizedBox(
-                                width: MediaQuery.of(context).size.width / 2,
-                              ),
-                            ],
-                          ),
-                        ),
-                        direction: DismissDirection.endToStart,
-                        secondaryBackground: Container(
-                          decoration: const BoxDecoration(
-                            //borderRadius: BorderRadius.circular(10),
-                            color: Colors.red,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              SizedBox(
-                                width: MediaQuery.of(context).size.width / 2,
-                              ),
-                              const Text(
-                                "ELIMINAR",
-                                style: TextStyle(color: Colors.white),
-                              ),
-                              const Icon(Icons.delete, color: Colors.white),
-                            ],
-                          ),
-                        ),
-                        key: UniqueKey(),
-                        confirmDismiss: (DismissDirection direction) async {
-                          if (direction == DismissDirection.endToStart) {
-                            return await showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return AlertDialog(
-                                  title: const Text("Confirmación"),
-                                  content: const Text(
-                                      "¿Estás seguro que quieres eliminar? \n\n Se perderá todo el registro de asistencia, esta acción no la puedes deshacer."),
-                                  actions: <Widget>[
-                                    ElevatedButton(
-                                      onPressed: () =>
-                                          Navigator.of(context).pop(false),
-                                      child: const Text("Cancelar"),
-                                    ),
-                                    ElevatedButton(
-                                        onPressed: () {
-                                          print("Eliminar");
-                                          print(index);
-
-                                          listJustificativos 
-                                              .remove(listJustificativos [index]);
-                                          setState(() {});
-                                          Navigator.of(context).pop(true);
-                                        },
-                                        child: const Text("Eliminar")),
-                                  ],
-                                );
-                              },
-                            );
-                          } else {
-                            /* Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => StudentDetailScreen(
-                                  student: listJustificativos [index],
-                                ),
-                              ),
-                            ); */
-
-                            return false;
-                          }
-                        },
-                        onDismissed: (DismissDirection direction) {
-                          if (direction == DismissDirection.endToStart) {
-                          } else {}
-                        },
-                        child: ListTile(
-                          leading: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.list_alt),
-                              Text("#${index + 1}", style: AppTheme.textbutton),
-                            ],
-                          ),
-                          title:  Text(
-                            listJustificativos [index].descripcion,
-                            style: AppTheme.subtitle2,
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                listJustificativos [index].fecha,
-                                style: AppTheme.caption,
-                              ),
-                               Text(professor.nombre,
-                                  style: AppTheme.subtitle1),
-                            ],
-                          ),
-                          //isThreeLine: true,
-                          trailing: Column(
-                            children: [
-                              IconButton(
-                                icon: Image.network(
-                                  listJustificativos [index].imageUrl,
-                                  width: 40,
-                                  height: 40,
-                                  fit: BoxFit.cover,
-                                ),
-                                onPressed: () {
-                                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => FullImageView(imageUrl: listJustificativos [index].imageUrl),
-                      ),
-                    );
-                                },
-                              ),
-                              /* IconButton(
-                                icon: const Icon(Icons.edit),
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const CreateJustificativosScreen("Editar"),
-                                    ),
-                                  );
-                                },
-                              ), */
-                            ],
-                          ),
-                        ),
-                      ));
-                },
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          final justificativo = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CrearJustificativoScreen(
+                profesor: widget.profesor,
               ),
             ),
-          ]),
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () async {
-           final justificativo = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => CrearJustificativoScreen(
-                    profesor: widget.profesor,
-                  ),
-                ),
-              );
+          );
 
-// imageUrl ahora contiene la URL de la imagen subida
-              if (justificativo != null) {
-                print('📸 Justificativo creado: ${justificativo}');
-                print('📸 Justificativo creado: ${Justificativo.fromJson(justificativo)}');
-                setState(() {
-                   agregarJustificativos(Justificativo.fromJson(justificativo));
-                });
-                print('📸 URL de la imagen: $imageUrl');
-              }
-          },
-          tooltip: 'Agregar Justificativo',
-          child: const Icon(Icons.add),
-        ));
-  }
-
-  Future<void> agregarJustificativos(justificativo) async {
-    print("Agregando justificativo: ${justificativo}");
-    setState(() {
-      listJustificativos .add(justificativo);
-      mensaje('¡Justificativo creado exitosamente!', "y");
-    });
-  }
-
-  /*  Future<void> editarJustificativos(index, attendance) async {
-    setState(() {
-      listJustificativos [index] = attendance;
-      mensaje('¡Asistencia editada exitosamente!', "y");
-    });
-  } */
-
-  mensaje(String msg, color) {
-    // Muestra un mensaje al volver a la página anterior
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        backgroundColor: color == "y" ? Colors.green : Colors.red,
+          if (justificativo != null) {
+            print(
+                '📸 Justificativo creado: ${Justificativo.fromJson(justificativo)}');
+            setState(() {
+              agregarJustificativos(Justificativo.fromJson(justificativo));
+            });
+          }
+        },
+        tooltip: 'Agregar Justificativo',
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
 
- 
+  Widget _buildHeader(BuildContext context) {
+    return Container(
+      height: 140,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Theme.of(context).colorScheme.primary,
+            Theme.of(context).colorScheme.tertiary,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(30),
+          bottomRight: Radius.circular(30),
+        ),
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () => Navigator.pop(context),
+              ),
+              Expanded(
+                child: Text(
+                  widget.profesor.nombre,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.refresh, color: Colors.white),
+                tooltip: 'Actualizar',
+                onPressed: listarJustificativos,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildJustificativoList() {
+    if (listJustificativos.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.assignment_outlined, size: 80, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text(
+              "Aún no se han creado Justificativos",
+              style: TextStyle(color: Colors.grey[600], fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: listJustificativos.length,
+      itemBuilder: (BuildContext context, int index) {
+        return _buildJustificativoCard(context, index);
+      },
+    );
+  }
+
+  Widget _buildJustificativoCard(BuildContext context, int index) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(15),
+        child: Dismissible(
+          key: UniqueKey(),
+          direction: DismissDirection.endToStart,
+          background: Container(
+            color: Colors.red,
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.only(right: 20),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text("ELIMINAR",
+                    style: TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.bold)),
+                SizedBox(width: 10),
+                Icon(Icons.delete, color: Colors.white),
+              ],
+            ),
+          ),
+          confirmDismiss: (direction) async {
+            return await showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text("Confirmación"),
+                  content: const Text(
+                      "¿Estás seguro que quieres eliminar? \n\nEsta acción no la puedes deshacer."),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15)),
+                  actions: <Widget>[
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      child: const Text("Cancelar"),
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                      ),
+                      onPressed: () {
+                        listJustificativos.remove(listJustificativos[index]);
+                        setState(() {});
+                        Navigator.of(context).pop(true);
+                      },
+                      child: const Text("Eliminar"),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+          child: ListTile(
+            contentPadding: const EdgeInsets.all(12),
+            leading: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color:
+                        Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    "#${index + 1}",
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            title: Text(
+              listJustificativos[index].descripcion,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(Icons.calendar_today,
+                        size: 14, color: Colors.grey[500]),
+                    const SizedBox(width: 5),
+                    Text(
+                      listJustificativos[index].fecha,
+                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            trailing: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => FullImageView(
+                        imageUrl: listJustificativos[index].imageUrl),
+                  ),
+                );
+              },
+              child: Hero(
+                tag: listJustificativos[index].imageUrl,
+                child: Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    image: DecorationImage(
+                      image: NetworkImage(listJustificativos[index].imageUrl),
+                      fit: BoxFit.cover,
+                    ),
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> agregarJustificativos(justificativo) async {
+    setState(() {
+      listJustificativos.add(justificativo);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('¡Justificativo creado exitosamente!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    });
+  }
 }
